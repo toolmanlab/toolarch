@@ -38,7 +38,6 @@ class LayerAnalyzer(BaseAnalyzer):
             if layer_idx is not None:
                 id_to_layer[m.id] = layer_idx
 
-        module_ids = {m.id for m in modules}
         issues: list[Issue] = []
 
         for edge in import_edges:

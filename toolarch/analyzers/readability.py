@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import os
 
 from toolarch.analyzers.base import BaseAnalyzer
 from toolarch.graph.adapter import GraphAdapter
-from toolarch.models import AnalysisResult, Issue, Metric, NodeKind, Severity
+from toolarch.models import AnalysisResult, Issue, Metric, Severity
 
 
 class ReadabilityAnalyzer(BaseAnalyzer):

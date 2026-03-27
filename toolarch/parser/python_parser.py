@@ -207,11 +207,23 @@ class PythonParser(BaseParser):
         mod_id: str,
         edges: list[Edge],
     ) -> None:
-        text = source[node.start_byte : node.end_byte].decode()  # type: ignore[attr-defined]
-        # Simple extraction: get the module name from import
         if node.type == "import_from_statement":  # type: ignore[attr-defined]
             module_node = node.child_by_field_name("module_name")  # type: ignore[attr-defined]
-            if module_node:
+
+            if module_node and module_node.type == "relative_import":
+                # Relative import: `from . import X` or `from .pkg import X`
+                # Extract imported names from the name field(s)
+                names = self._collect_import_names(node, source)
+                for imp_name in names:
+                    edges.append(
+                        Edge(
+                            id=_edge_id(mod_id, imp_name, "import"),
+                            source_id=mod_id,
+                            target_id=f"unresolved:{imp_name}",
+                            kind=EdgeKind.IMPORT,
+                        )
+                    )
+            elif module_node and module_node.type == "dotted_name":
                 mod_name = source[module_node.start_byte : module_node.end_byte].decode()
                 edges.append(
                     Edge(
@@ -233,3 +245,12 @@ class PythonParser(BaseParser):
                             kind=EdgeKind.IMPORT,
                         )
                     )
+
+    @staticmethod
+    def _collect_import_names(node: object, source: bytes) -> list[str]:
+        """Collect imported names from an import_from_statement."""
+        names: list[str] = []
+        for child in node.children:  # type: ignore[attr-defined]
+            if child.type == "dotted_name":
+                names.append(source[child.start_byte : child.end_byte].decode())
+        return names
